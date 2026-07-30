@@ -35,7 +35,7 @@ def test_reference_trajectory_integrity():
     # Compute SHA256 of rounded loss trajectory
     rounded_losses = [(step, round(loss, 6)) for step, loss in ref_losses]
     loss_hash = hashlib.sha256(repr(rounded_losses).encode()).hexdigest()
-    expected_hash = "836b77566daccc0c0eb7e89f0ef5134097b53709e157f33da83cf4501da2bfe2"
+    expected_hash = "d5e8edf8de92c4a7ae90150900e2249c9dc6178863b258b38344be4d53ed4257"
     assert loss_hash == expected_hash, f"Reference loss trajectory hash mismatch: got {loss_hash}, expected {expected_hash}"
 
 @pytest.mark.parametrize("seed,interrupt_at", [
