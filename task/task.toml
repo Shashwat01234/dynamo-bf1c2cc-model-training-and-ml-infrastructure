@@ -1,0 +1,32 @@
+artifacts = ["/app/checkpoint.py", "/app/train.py"]
+
+[task]
+name = "dynamo/bit-exact-resume"
+description = "Fix PyTorch training loop checkpoint and resume state to achieve bit-exact reproducibility."
+
+[metadata]
+category = "Model Training and ML Infrastructure"
+subcategory = "Training loops"
+model_tested = "GPT-5.4"
+agent_tested = "Terminus-2"
+task_objective = ["debug", "implement"]
+artifact_type = ["codebase"]
+expert_time_estimate_hours = 4
+difficulty_explanation = "Training loops have complex, interacting state components: model weights, optimizer states, LR scheduler counters, AMP GradScaler loss scale, gradient accumulation micro-step counters, DataLoader sampler offsets, and RNG streams. Omission of any state component (e.g. sampler offset or accumulated gradients mid-accumulation) causes post-resume divergence. Fixing one component without restoring others leads to subtle desynchronizations."
+solution_explanation = "The solution audits and captures the complete Markov state of the training process in checkpoint.py and train.py. When saving a checkpoint, it records model parameters, optimizer state_dict, scheduler state_dict, GradScaler state_dict, sampler offset state (consumed_samples), micro_step counter, accumulated parameter gradients, and PyTorch/NumPy/Python RNG states. On resume, all state dicts and counters are restored before training resumes."
+verification_explanation = "The verifier runs an uninterrupted reference training loop for 60 micro-steps and records per-step loss values and final parameter tensors. It then tests 6 scenarios (2 random seeds x 3 interruption micro-step points mid-epoch / mid-accumulation). In each scenario, it runs training to the interruption step, saves checkpoint, terminates, resumes from checkpoint in a fresh process, and continues to step 60. All 6 scenarios must match the reference trajectory and final parameters bit-for-bit (torch.equal). It also verifies the original buggy code fails at least 4 of 6 scenarios and checks reference hash to prevent anti-cheat shortcuts."
+
+[verifier]
+timeout_sec = 300.0
+
+[agent]
+timeout_sec = 1800.0
+
+[environment]
+build_timeout_sec = 600.0
+cpus = 2
+memory_mb = 4096
+storage_mb = 10240
+gpus = 0
+allow_internet = true
+mcp_servers = []
