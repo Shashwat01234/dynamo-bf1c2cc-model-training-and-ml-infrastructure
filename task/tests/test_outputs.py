@@ -8,13 +8,15 @@ import torch
 
 # Ensure /app is in sys.path when running in container, else fallback to local task directory
 app_path = Path("/app")
+local_data_path = Path(__file__).parent.parent / "environment" / "data"
 if app_path.exists():
     sys.path.insert(0, str(app_path))
 else:
-    local_data_path = Path(__file__).parent.parent / "environment" / "data"
     sys.path.insert(0, str(local_data_path.resolve()))
 
 from train import run_training
+from model import SmallTransformer
+from dataset import SyntheticTextDataset, ResumableSampler
 import checkpoint
 import train
 
@@ -103,12 +105,12 @@ def test_unpatched_code_discrimination():
         ckpt_path = os.path.join(tmpdir, "test_check.pt")
         
         # Save a checkpoint using the active checkpoint.py
-        model = train.SmallTransformer()
+        model = SmallTransformer()
         optimizer = torch.optim.AdamW(model.parameters())
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10)
         scaler = torch.amp.GradScaler('cpu')
-        dataset = train.SyntheticTextDataset()
-        sampler = train.ResumableSampler(dataset)
+        dataset = SyntheticTextDataset()
+        sampler = ResumableSampler(dataset)
         
         checkpoint.save_checkpoint(ckpt_path, model, optimizer, scheduler, scaler, sampler, 1, 2, 3)
         raw_state = torch.load(ckpt_path, map_location="cpu", weights_only=False)

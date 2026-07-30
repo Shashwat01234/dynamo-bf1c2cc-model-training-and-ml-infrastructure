@@ -24,19 +24,17 @@ jobs:
         run: |
           pip install torch==2.6.0 numpy==2.2.3 pytest==8.4.1 pytest-json-ctrf==0.3.5
 
-      - name: Run oracle solution
+      - name: Run oracle solution (patches environment/data files)
         run: |
-          cd task/solution
-          bash solve.sh
+          python task/solution/solve.py
 
       - name: Run verifier tests
         run: |
-          cd task/tests
-          bash test.sh
+          pytest task/tests/test_outputs.py -v --tb=short
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
-          path: task/tests/ctrf-report.json
+          path: task/tests/
